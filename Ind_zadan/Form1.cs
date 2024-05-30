@@ -6,6 +6,9 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Runtime.Serialization.Formatters.Binary;
 
+
+// Хуй
+
 namespace Ind_zadan
 {
     public partial class Form1 : Form
