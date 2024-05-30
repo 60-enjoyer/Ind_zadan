@@ -184,6 +184,7 @@ namespace Ind_zadan
         {
             int i = dataGridView1.CurrentCell.RowIndex;
             contacts.Remove(fCnt[i]);
+            fCnt.RemoveAt(i);
             FillDGV(contacts);
         }
 
