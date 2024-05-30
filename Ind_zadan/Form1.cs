@@ -173,12 +173,6 @@ namespace Ind_zadan
             if (checkBox4.Checked) checkBox3.Checked = false;
             UpdateDataGridViewFilterAndSort();
         }
-
-        private void button7_Click(object sender, EventArgs e)
-        {
-            checkedListBox1.Items.Clear();
-            LoadCheckedListBoxData();
-        }
         //Поиск
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
