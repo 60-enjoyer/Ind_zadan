@@ -182,21 +182,9 @@ namespace Ind_zadan
 
         private void button9_Click(object sender, EventArgs e)
         {
-            // Проверяем, есть ли выбранный ряд
-            if (dataGridView1.SelectedRows.Count > 0)
-            {
-                // Получаем выбранный ряд
-                DataGridViewRow selectedRow = dataGridView1.SelectedRows[0];
-
-                // Получаем связанный объект контакта
-                Contact selectedContact = selectedRow.DataBoundItem as Contact;
-
-                // Удаляем контакт из списка
-                contacts.Remove(selectedContact);
-
-                // Обновляем привязанный источник данных в DataGridView
-                FillDGV(contacts);
-            }
+            int i = dataGridView1.CurrentCell.RowIndex;
+            contacts.Remove(fCnt[i]);
+            FillDGV(contacts);
         }
 
         private void Form1_Load(object sender, EventArgs e)
