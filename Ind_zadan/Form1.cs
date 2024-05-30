@@ -5,19 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Runtime.Serialization.Formatters.Binary;
-
-
-// Хуй
+using System.Threading;
 
 namespace Ind_zadan
 {
     public partial class Form1 : Form
     {
 
-        List<Contact> fCnt = new List<Contact>();
 
         public Form1()
-
         {
             InitializeComponent();
             //filter method
@@ -26,26 +22,51 @@ namespace Ind_zadan
             this.Load += Form1_Load;
 
             textBox1.TextChanged += textBox1_TextChanged;
+            
+            dataGridView1.ColumnCount = 6;
+            dataGridView1.RowCount = 1;
 
+            string[] names = { "Имя", "Адрес", "Номер телефона", "Почта", "Коментарий", "Дата рождения/тип бизнесса" };
+
+            for (int i = 0; i < names.Length; ++i)
+            {
+                dataGridView1.Columns[i].HeaderCell.Value = names[i];
+                dataGridView1.Columns[i].SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
             // Загрузка данных при инициализации формы
             LoadContactsFromBinary("contacts.bin");
+            
+            new Thread(() => {
+                Thread.Sleep(100);
+                Invoke((MethodInvoker)(() => {
+                    dataGridView1.AutoResizeColumns();
+                    dataGridView1.AutoResizeRows();
+                }));
+            }).Start();
 
-            dataGridView1.DataSource = contacts;
-            dataGridView1.Columns.Add("DateOfBirth_BusinessType", "DateOfBirth/BusinessType"); //последний столбец
-            dataGridView1.CellFormatting += dataGridView1_CellFormatting;
-            dataGridView1.Columns["DateOfBirth_BusinessType"].Width = 215;
-            dataGridView1.Columns["Address"].Width = 200;
-            foreach (DataGridViewColumn column in dataGridView1.Columns)
-            {
-                column.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-            }
-            dataGridView1.Columns["DateOfBirth_BusinessType"].DisplayIndex = dataGridView1.Columns.Count - 1; //норм отображение  
-
-            dataGridView1.DataSource = null;
-            dataGridView1.DataSource = contacts;
+            UpdateDataGridViewFilterAndSort();
         }
         List<Contact> contacts = new List<Contact>();
+        List<Contact> fCnt = new List<Contact>();
+
+        void FillDGV(List<Contact> list)
+        {
+            dataGridView1.RowCount = list.Count;
+            for (int i = 0; i < list.Count; i++)
+            {
+                dataGridView1.Rows[i].Cells[0].Value = list[i].Name;
+                dataGridView1.Rows[i].Cells[1].Value = list[i].Address;
+                dataGridView1.Rows[i].Cells[2].Value = list[i].PhoneNumber;
+                dataGridView1.Rows[i].Cells[3].Value = list[i].Email;
+                dataGridView1.Rows[i].Cells[4].Value = list[i].Comment;
+                if (list[i].GetType() == "Company")
+                    dataGridView1.Rows[i].Cells[5].Value = (list[i] as Company).BusinessType;
+                else
+                    dataGridView1.Rows[i].Cells[5].Value = (list[i] as Person).DateOfBirth;
+            }
+            dataGridView1.AutoResizeColumns();
+            dataGridView1.AutoResizeRows();
+        }
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -56,25 +77,7 @@ namespace Ind_zadan
 
                 contacts.Add(form2.newContact);
 
-                dataGridView1.DataSource = null;
-                dataGridView1.DataSource = contacts; //заполнил информацией
-                dataGridView1.Columns["DateOfBirth_BusinessType"].DisplayIndex = dataGridView1.Columns.Count - 1;
-
-            }
-        }
-
-        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e) //заполнение столба "DateOfBirth_BusinessType"
-        {
-            if (dataGridView1.Columns[e.ColumnIndex].Name == "DateOfBirth_BusinessType" && e.RowIndex >= 0)
-            {
-                Contact contact = dataGridView1.Rows[e.RowIndex].DataBoundItem as Contact;
-                if (contact != null)
-                {
-                    if (contact is Person)
-                        e.Value = ((Person)contact).DateOfBirth;
-                    else if (contact is Company)
-                        e.Value = ((Company)contact).BusinessType;
-                }
+                FillDGV(contacts);
             }
         }
         
@@ -124,9 +127,7 @@ namespace Ind_zadan
             if (filteredContacts.Any())
             {
                 // Обновляем источник данных DataGridView
-                dataGridView1.DataSource = null;
-                dataGridView1.DataSource = filteredContacts;
-                dataGridView1.Columns["DateOfBirth_BusinessType"].DisplayIndex = dataGridView1.Columns.Count - 1;
+                FillDGV(filteredContacts);
             }
 
             fCnt = filteredContacts.ToArray().ToList();
@@ -181,11 +182,8 @@ namespace Ind_zadan
         //Поиск
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            // Проверяем существование столбца с именем "Name"
-            if (dataGridView1.Columns.Contains("Name"))
-                dataGridView1.DataSource = fCnt
-                    .Where(contact => contact.Name.ToLower().Contains(textBox1.Text.ToLower()))
-                    .ToList();
+            fCnt = contacts.Where(contact => contact.Name.ToLower().Contains(textBox1.Text.ToLower())).ToList();
+            FillDGV(fCnt);
         }
 
         private void button9_Click(object sender, EventArgs e)
@@ -203,8 +201,7 @@ namespace Ind_zadan
                 contacts.Remove(selectedContact);
 
                 // Обновляем привязанный источник данных в DataGridView
-                dataGridView1.DataSource = null;
-                dataGridView1.DataSource = contacts;
+                FillDGV(contacts);
             }
         }
 
@@ -219,7 +216,7 @@ namespace Ind_zadan
             // Перебор строк в колонке Address и добавление части до символа "/" в HashSet
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                string address = row.Cells["Address"].Value.ToString();
+                string address = row.Cells[1].Value.ToString();
                 string[] parts = address.Split('/');
                 if (parts.Length > 0)
                 {
@@ -283,11 +280,7 @@ namespace Ind_zadan
                     }
 
                     // Обновляем источник данных DataGridView
-                    dataGridView1.DataSource = null;
-                    dataGridView1.DataSource = contacts;
-
-                    // Переместим столбец "DateOfBirth/BusinessType" в конец
-                    dataGridView1.Columns[0].DisplayIndex = dataGridView1.Columns.Count - 1;
+                    FillDGV(contacts);
                 }
                 catch (Exception ex)
                 {
@@ -316,6 +309,7 @@ namespace Ind_zadan
                         foreach (var item in items)
                             checkedListBox1.Items.Add(item, true); // Установка всех элементов с галочкой
                     }
+                    UpdateDataGridViewFilterAndSort();
                 }
                 catch (Exception ex)
                 {
@@ -341,9 +335,7 @@ namespace Ind_zadan
                     if (result == DialogResult.Yes)
                     {
                         // Очистка DataGridView
-                        dataGridView1.DataSource = null;
                         dataGridView1.Rows.Clear();
-                        dataGridView1.Columns.Clear();
 
                         // Удаление файла с данными
                         File.Delete(filename);
@@ -365,6 +357,7 @@ namespace Ind_zadan
 
         private void dataGridView1_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
+            if(e.RowIndex < 0) return;
             _ = new EditContact(fCnt[e.RowIndex]).ShowDialog();
             LoadCheckedListBoxData();
         }
