@@ -173,12 +173,6 @@ namespace Ind_zadan
             if (checkBox4.Checked) checkBox3.Checked = false;
             UpdateDataGridViewFilterAndSort();
         }
-
-        private void button7_Click(object sender, EventArgs e)
-        {
-            checkedListBox1.Items.Clear();
-            LoadCheckedListBoxData();
-        }
         //Поиск
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
@@ -188,21 +182,10 @@ namespace Ind_zadan
 
         private void button9_Click(object sender, EventArgs e)
         {
-            // Проверяем, есть ли выбранный ряд
-            if (dataGridView1.SelectedRows.Count > 0)
-            {
-                // Получаем выбранный ряд
-                DataGridViewRow selectedRow = dataGridView1.SelectedRows[0];
-
-                // Получаем связанный объект контакта
-                Contact selectedContact = selectedRow.DataBoundItem as Contact;
-
-                // Удаляем контакт из списка
-                contacts.Remove(selectedContact);
-
-                // Обновляем привязанный источник данных в DataGridView
-                FillDGV(contacts);
-            }
+            int i = dataGridView1.CurrentCell.RowIndex;
+            contacts.Remove(fCnt[i]);
+            fCnt.RemoveAt(i);
+            FillDGV(contacts);
         }
 
         private void Form1_Load(object sender, EventArgs e)
